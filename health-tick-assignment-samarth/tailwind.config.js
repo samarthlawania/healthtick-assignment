@@ -4,9 +4,6 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
-  "compilerOptions": {
-    "noUnusedLocals": false
-  },
   theme: {
     extend: {},
   },

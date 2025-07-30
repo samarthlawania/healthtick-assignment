@@ -40,6 +40,7 @@ export interface BookingModalProps {
   clients: Client[];
   existingBookings: Booking[];
   userId: string | null; // This is the added prop
+  editingBooking: Booking | null;
 }
 
 export interface DateNavigationProps {

@@ -1,8 +1,8 @@
 // src/components/calendar/BookingModal.tsx
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
-import type { Client, CallType, BookingModalProps } from '../../types';
+import type { Client, CallType, BookingModalProps} from '../../types';
 import { getCallDuration, checkTimeSlotConflict } from '../../utils/timeUtils'; // Import getCallDuration and checkTimeSlotConflict
 
 export const BookingModal: React.FC<BookingModalProps> = ({
@@ -13,18 +13,28 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   selectedDate,
   clients,
   existingBookings,
-  userId, // Receive userId as a prop from App.tsx
+  userId,
+  editingBooking
 }) => {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [callType, setCallType] = useState<CallType>('onboarding');
-  const [search, setSearch] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isBooking, setIsBooking] = useState(false); 
 
-  const filteredClients = clients.filter((c) =>
-    c.name.toLowerCase().includes(search.toLowerCase()) ||
-    c.phone.includes(search)
-  );
+  useEffect(() => {
+    if (editingBooking) {
+      // If editing, pre-fill client, call type, and search term
+      const clientToEdit = clients.find(c => c.id === editingBooking.clientId);
+      setSelectedClient(clientToEdit || null);
+      setCallType(editingBooking.callType);
+    } else {
+      setSelectedClient(null);
+      setCallType('onboarding');
+    }
+    setError(null);
+    setIsBooking(false); 
+  }, [editingBooking, isOpen, clients]);
+
 
   const handleBookNow = async () => { 
     if (!userId) {
@@ -37,7 +47,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     }
 
     const duration = getCallDuration(callType);
-    if (checkTimeSlotConflict(selectedTime, callType, existingBookings)) {
+     const bookingsToCheckForConflict = editingBooking ? existingBookings.filter(b => b.id !== editingBooking.id): existingBookings;
+    if (checkTimeSlotConflict(selectedTime, callType, bookingsToCheckForConflict)) {
       setError('This time slot conflicts with an existing booking. Please choose another time.');
       return;
     }
@@ -57,6 +68,9 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         duration,
         status: 'scheduled',
       };
+      if (editingBooking) {
+        bookingPayload.id = editingBooking.id;
+      }
 
       if (callType === 'follow-up') {
         bookingPayload.recurringStartDate = selectedDate;
@@ -75,14 +89,6 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={`Book Slot at ${selectedTime}`}>
       <div className="space-y-4 p-4">
-        {/* Client Search Input */}
-        <input
-          type="text"
-          placeholder="Search client by name or phone..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="border border-gray-300 w-full p-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 ease-in-out"
-        />
 
         {/* Client Selection Dropdown */}
         <select
@@ -90,10 +96,11 @@ export const BookingModal: React.FC<BookingModalProps> = ({
           onChange={(e) =>
             setSelectedClient(clients.find((c) => c.id === e.target.value) || null)
           }
+
           value={selectedClient?.id || ''}
         >
           <option value="">Select Client</option>
-          {filteredClients.map((client) => (
+          {clients.map((client) => (
             <option key={client.id} value={client.id}>
               {client.name} - {client.phone}
             </option>

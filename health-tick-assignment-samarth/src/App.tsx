@@ -62,6 +62,7 @@ const currentDate = format(selectedDate, 'yyyy-MM-dd');
     error,   
     addBooking, 
     deleteBooking, 
+    updateBooking,
   } = useBookings(currentDate);
 
   const {
@@ -94,6 +95,21 @@ const currentDate = format(selectedDate, 'yyyy-MM-dd');
     setModalOpen(false);       
     setSelectedSlot(null);   
     setEditingBooking(null);   
+  };
+  const handleSaveBooking = async (bookingData: Omit<Booking, 'id'> & { id?: string }) => {
+    try {
+      if (bookingData.id) {
+        console.log("Updating booking:", bookingData);
+        await updateBooking(bookingData as Booking);
+      } else {
+        console.log("Adding new booking");
+        await addBooking(bookingData);
+      }
+      closeModal();
+    } catch (err) {
+      console.error("App: Failed to save booking:", err);
+      
+    }
   };
 
   if (!isAuthReady || loading || clientsLoading) {
@@ -166,12 +182,13 @@ const currentDate = format(selectedDate, 'yyyy-MM-dd');
           <BookingModal
             isOpen={isModalOpen}
             onClose={closeModal}
-            onBook={addBooking} 
+            onBook={handleSaveBooking} 
             selectedTime={selectedSlot}
             selectedDate={currentDate}
             clients={clients}
             existingBookings={bookings}
             userId={userId} 
+            editingBooking={editingBooking}
           />
         )}
       </div>

@@ -8,20 +8,16 @@ interface UseBookingsReturn {
   error: string | null;
   addBooking: (booking: Omit<Booking, 'id'>) => Promise<void>;
   deleteBooking: (bookingId: string) => Promise<void>;
+  updateBooking: (booking: Booking) => Promise<void>;
   refreshBookings: () => Promise<void>;
 }
 
-/**
- * Custom hook for managing bookings
- */
 export const useBookings = (currentDate: string): UseBookingsReturn => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  /**
-   * Fetch bookings for the current date
-   */
+
   const fetchBookings = useCallback(async () => {
     try {
       setLoading(true);
@@ -36,20 +32,15 @@ export const useBookings = (currentDate: string): UseBookingsReturn => {
     }
   }, [currentDate]);
 
-  /**
-   * Add a new booking with optimistic updates
-   */
   const addBooking = useCallback(async (booking: Omit<Booking, 'id'>) => {
     const tempId = `temp_${Date.now()}`;
     const optimisticBooking = { ...booking, id: tempId };
     
-    // Optimistic update
     setBookings(prev => [...prev, optimisticBooking].sort((a, b) => a.time.localeCompare(b.time)));
     
     try {
       const newBookingId = await bookingService.addBooking(booking);
       
-      // Replace temporary booking with real one
       setBookings(prev => 
         prev.map(b => 
           b.id === tempId 
@@ -65,9 +56,34 @@ export const useBookings = (currentDate: string): UseBookingsReturn => {
     }
   }, []);
 
-  /**
-   * Delete a booking with optimistic updates
-   */
+  const updateBooking = useCallback(async (updated: Booking) => {
+    const oldBooking = bookings.find(b => b.id === updated.id);
+    setBookings(prev =>
+      prev.map(b => (b.id === updated.id ? updated : b)).sort((a, b) => a.time.localeCompare(b.time))
+    );
+
+    try {
+      await bookingService.updateBooking(updated.id, {
+        date: updated.date,
+        time: updated.time,
+        clientId: updated.clientId,
+        clientName: updated.clientName,
+        callType: updated.callType,
+        isRecurring: updated.isRecurring,
+        duration: updated.duration,
+        status: updated.status
+      });
+    } catch (err) {
+      if (oldBooking) {
+        setBookings(prev =>
+          prev.map(b => (b.id === oldBooking.id ? oldBooking : b)).sort((a, b) => a.time.localeCompare(b.time))
+        );
+      }
+      setError('Failed to update booking');
+      throw err;
+    }
+  }, [bookings]);
+
   const deleteBooking = useCallback(async (bookingId: string) => {
     const bookingToDelete = bookings.find(b => b.id === bookingId);
     
@@ -104,6 +120,7 @@ export const useBookings = (currentDate: string): UseBookingsReturn => {
     error,
     addBooking,
     deleteBooking,
-    refreshBookings
+    refreshBookings,
+    updateBooking
   };
 };

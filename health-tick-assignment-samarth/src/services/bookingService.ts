@@ -7,7 +7,8 @@ import {
   where,
   getDocs,
   orderBy,
-  Timestamp
+  Timestamp,
+  updateDoc
 } from 'firebase/firestore';
 import { db } from './firebase';
 import type { Booking, Client } from '../types';
@@ -49,9 +50,14 @@ export class BookingService {
     await deleteDoc(bookingDoc);
   }
 
-  /**
-   * Get bookings for a specific date (including recurring)
-   */
+  async updateBooking(bookingId: string, updates: Partial<Omit<Booking, 'id'>>): Promise<void> {
+    const bookingDocRef = doc(db, 'bookings', bookingId);
+    const updatesWithTimestamp = {
+      ...updates,
+      updatedAt: Timestamp.fromDate(new Date())
+    };
+    await updateDoc(bookingDocRef, updatesWithTimestamp);
+  }
   async getBookingsForDate(date: string): Promise<Booking[]> {
     try {
       // Get direct bookings for the specific date
@@ -107,6 +113,8 @@ export class BookingService {
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
   }
 }
+
+
 
 // Export singleton instance
 export const bookingService = new BookingService();

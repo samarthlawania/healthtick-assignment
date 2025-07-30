@@ -14,20 +14,12 @@ import type { Booking, Client } from '../types';
 import { mockClients } from '../data/mockClients';
 import { isSameDayOfWeek, isDateAfterOrEqual } from '../utils/dateUtils';
 
-/**
- * BookingService handles all Firebase operations
- */
+
 export class BookingService {
   private bookingsCollection = collection(db, 'bookings');
-//   private clientsCollection = collection(db, 'clients');
 
-  /**
-   * Get all clients (mock data for demo)
-   */
   async getClients(): Promise<Client[]> {
-    // In production, fetch from Firebase:
-    // const snapshot = await getDocs(this.clientsCollection);
-    // return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Client));
+
     
     return Promise.resolve(mockClients);
   }

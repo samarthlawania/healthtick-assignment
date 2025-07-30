@@ -1,4 +1,3 @@
-// src/components/calendar/Calendar.tsx
 import React from 'react';
 import { TimeSlot } from './TimeSlot';
 import type{ Booking } from '../../types';
@@ -9,9 +8,10 @@ interface CalendarProps {
   onEditBooking: (booking: Booking) => void;
   selectedDate: Date;
   date: string;
+  onDeleteBooking: (bookingId: string) => void;
 }
 
-export const Calendar: React.FC<CalendarProps> = ({ bookings, onSlotClick, date, onEditBooking }) => {
+export const Calendar: React.FC<CalendarProps> = ({ bookings, onSlotClick, onEditBooking,onDeleteBooking }) => {
   const timeSlots = Array.from({ length: 27 }, (_, i) => {
     const hour = 10 + Math.floor((i * 20 + 30) / 60);
     const minute = (i * 20 + 30) % 60;
@@ -28,6 +28,7 @@ export const Calendar: React.FC<CalendarProps> = ({ bookings, onSlotClick, date,
             time={time}
             booking={existing}
             onClick={() => existing ? onEditBooking(existing) : onSlotClick(time)}
+            onDeleteBooking={onDeleteBooking}
           />
         );
       })}

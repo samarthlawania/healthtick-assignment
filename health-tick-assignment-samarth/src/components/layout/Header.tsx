@@ -1,48 +1,48 @@
 import React from 'react';
+import { format } from 'date-fns';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
+import {Button} from '../ui/Button'; 
 
 interface HeaderProps {
   selectedDate: Date;
-  setSelectedDate: (date: Date) => void;
+  onPrevDay: () => void;
+  onNextDay: () => void;
+  onToday: () => void;
+  onOpenDatePicker: () => void; 
 }
 
-const Header: React.FC<HeaderProps> = ({ selectedDate, setSelectedDate }) => {
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', {
-      weekday: 'long',
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  };
-
-  const goToPreviousDay = () => {
-    const newDate = new Date(selectedDate);
-    newDate.setDate(newDate.getDate() - 1);
-    setSelectedDate(newDate);
-  };
-
-  const goToNextDay = () => {
-    const newDate = new Date(selectedDate);
-    newDate.setDate(newDate.getDate() + 1);
-    setSelectedDate(newDate);
-  };
-
+const Header: React.FC<HeaderProps> = ({ selectedDate, onPrevDay, onNextDay, onToday, onOpenDatePicker }) => {
   return (
-    <header className="flex items-center justify-between px-4 py-3 bg-white shadow">
-      <div className="text-xl font-bold">📅 My Calendar</div>
-      <div className="flex items-center gap-3">
+    <header className="bg-white shadow-sm p-4 flex flex-col sm:flex-row justify-between items-center rounded-b-lg">
+      <div className="flex items-center mb-4 sm:mb-0">
+        <h1 className="text-2xl font-bold text-gray-900 mr-4">HealthTick Calendar</h1>
+        <Button onClick={onToday} variant="secondary" className="mr-2">Today</Button>
         <button
-          onClick={goToPreviousDay}
-          className="px-3 py-1.5 bg-gray-200 rounded hover:bg-gray-300"
+          onClick={onOpenDatePicker} 
+          className="p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          aria-label="Open Calendar"
         >
-          ←
+          <CalendarIcon size={20} className="text-gray-600" />
         </button>
-        <span className="text-sm font-medium">{formatDate(selectedDate)}</span>
+      </div>
+      
+      <div className="flex items-center space-x-2">
         <button
-          onClick={goToNextDay}
-          className="px-3 py-1.5 bg-gray-200 rounded hover:bg-gray-300"
+          onClick={onPrevDay}
+          className="p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          aria-label="Previous Day"
         >
-          →
+          <ChevronLeft size={20} className="text-gray-600" />
+        </button>
+        <span className="text-xl font-semibold text-gray-800 w-40 text-center">
+          {format(selectedDate, 'MMM dd, yyyy')}
+        </span>
+        <button
+          onClick={onNextDay}
+          className="p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          aria-label="Next Day"
+        >
+          <ChevronRight size={20} className="text-gray-600" />
         </button>
       </div>
     </header>

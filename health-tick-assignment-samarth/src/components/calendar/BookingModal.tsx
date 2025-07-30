@@ -19,17 +19,14 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   const [callType, setCallType] = useState<CallType>('onboarding');
   const [search, setSearch] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [isBooking, setIsBooking] = useState(false); // State to manage loading during booking process
+  const [isBooking, setIsBooking] = useState(false); 
 
-  // Filter clients based on search input (case-insensitive name or phone number)
   const filteredClients = clients.filter((c) =>
     c.name.toLowerCase().includes(search.toLowerCase()) ||
     c.phone.includes(search)
   );
 
-  // Handler for the "Book Now" button click
-  const handleBookNow = async () => { // Make handleBookNow an async function
-    // Basic client-side validation
+  const handleBookNow = async () => { 
     if (!userId) {
       setError('Authentication error: User ID not available. Please refresh.');
       return;
@@ -39,20 +36,17 @@ export const BookingModal: React.FC<BookingModalProps> = ({
       return;
     }
 
-    // Perform a client-side conflict check for immediate feedback.
-    // The server-side (Firestore transaction) will perform the definitive check.
     const duration = getCallDuration(callType);
     if (checkTimeSlotConflict(selectedTime, callType, existingBookings)) {
       setError('This time slot conflicts with an existing booking. Please choose another time.');
       return;
     }
 
-    setIsBooking(true); // Set loading state to true
-    setError(null); // Clear any previous error messages
+    setIsBooking(true); 
+    setError(null); 
 
     try {
-      // Call the onBook prop with the new booking data
-      // Include the userId with the booking data
+     
       const bookingPayload: any = {
         date: selectedDate,
         time: selectedTime,
@@ -69,13 +63,12 @@ export const BookingModal: React.FC<BookingModalProps> = ({
       }
 
       await onBook(bookingPayload);
-      onClose(); // Close the modal on successful booking
+      onClose(); 
     } catch (err: any) {
-      // Catch and display errors from the booking process (e.g., transaction conflicts)
       setError(err.message || 'Failed to book slot. Please try again.');
       console.error("BookingModal: Booking failed:", err);
     } finally {
-      setIsBooking(false); // Reset loading state
+      setIsBooking(false); 
     }
   };
 

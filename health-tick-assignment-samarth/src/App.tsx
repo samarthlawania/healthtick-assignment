@@ -6,20 +6,25 @@ import { useState, useEffect } from 'react';
 import type { Booking } from './types';
 import { useBookings } from './hooks/useBooking';
 import { useClients } from './hooks/useClients';
-import { initializeAuth, auth } from './services/firebase'; // Import auth and initializeAuth
-import { onAuthStateChanged } from 'firebase/auth'; // Import onAuthStateChanged
-import { LoadingSpinner } from './components/ui/LoadingSpinner'; // Import LoadingSpinner component
+import { initializeAuth, auth } from './services/firebase'; 
+import { onAuthStateChanged } from 'firebase/auth'; 
+import { LoadingSpinner } from './components/ui/LoadingSpinner'; 
+import DatePicker from './components/ui/DatePicker';
+import { format } from 'date-fns';
+
 
 function App() {
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
   const [isModalOpen, setModalOpen] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null); // State to store the authenticated user's ID
-  const [isAuthReady, setIsAuthReady] = useState(false); // State to track auth readiness
+  const [userId, setUserId] = useState<string | null>(null); 
+  const [isAuthReady, setIsAuthReady] = useState(false); 
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
-  // Derive currentDate string in YYYY-MM-DD format for the useBookings hook
-  const currentDate = selectedDate.toISOString().split('T')[0];
+const currentDate = format(selectedDate, 'yyyy-MM-dd');
+  console.log("selectedDate", selectedDate);
+  console.log("currentDate", currentDate);
 
   useEffect(() => {
   const initAuth = async () => {
@@ -53,39 +58,42 @@ function App() {
 
   const {
     bookings,
-    loading, // Loading state for bookings
-    error,   // Error state for bookings
-    addBooking, // Function to add a new booking
-    deleteBooking, // Function to delete an existing booking
-    refreshBookings // Function to manually refresh booking data
-  } = useBookings(currentDate, userId, isAuthReady);
+    loading, 
+    error,   
+    addBooking, 
+    deleteBooking, 
+  } = useBookings(currentDate);
 
-  // Use the useClients hook to fetch client data
   const {
     clients,
-    loading: clientsLoading, // Loading state for clients
-    error: clientsError // Error state for clients
+    loading: clientsLoading, 
+    error: clientsError 
   } = useClients();
 
-  // Handler for when an empty time slot is clicked
   const handleSlotClick = (slotTime: string) => {
-    setSelectedSlot(slotTime); // Set the selected time slot
-    setEditingBooking(null);   // Clear any existing booking being edited
-    setModalOpen(true);        // Open the booking modal
+    setSelectedSlot(slotTime); 
+    setEditingBooking(null);   
+    setModalOpen(true);        
   };
 
-  // Handler for when an existing booking is clicked (e.g., to edit or delete)
+  const handleSelectDateFromPicker = (date: Date) => {
+    setSelectedDate(date) 
+    setShowDatePicker(false); 
+  };
+
   const handleEditBooking = (booking: Booking) => {
-    setSelectedSlot(booking.time); // Set the time of the booking being edited
-    setEditingBooking(booking);    // Set the booking object for editing
-    setModalOpen(true);            // Open the booking modal
+    setSelectedSlot(booking.time); 
+    setEditingBooking(booking);   
+    setModalOpen(true);            
+  };
+  const handleOpenDatePicker = () => {
+    setShowDatePicker(true);
   };
 
-  // Handler to close the booking modal and reset related states
   const closeModal = () => {
-    setModalOpen(false);       // Close the modal
-    setSelectedSlot(null);     // Clear selected slot
-    setEditingBooking(null);   // Clear editing booking
+    setModalOpen(false);       
+    setSelectedSlot(null);   
+    setEditingBooking(null);   
   };
 
   if (!isAuthReady || loading || clientsLoading) {
@@ -116,9 +124,29 @@ function App() {
   return (
     <>
       <div className="min-h-screen bg-gray-100 font-inter">
-        <Header selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
+        <Header
+          selectedDate={selectedDate}
+          onPrevDay={() => setSelectedDate(prev => {
+            const newDate = new Date(prev);
+            newDate.setDate(prev.getDate() - 1);
+            return newDate;
+          })}
+          onNextDay={() => setSelectedDate(prev => {
+            const newDate = new Date(prev);
+            newDate.setDate(prev.getDate() + 1);
+            return newDate;
+          })}
+          onToday={() => setSelectedDate(new Date())}
+          onOpenDatePicker={handleOpenDatePicker}
+        />
+        <DatePicker
+          isOpen={showDatePicker}
+          onClose={() => setShowDatePicker(false)}
+          onSelectDate={handleSelectDateFromPicker}
+          initialDate={selectedDate}
+        />
         <main className="max-w-4xl mx-auto px-4 py-6">
-          {userId && ( // Display the current user ID for identification and debugging
+          {userId && ( 
             <div className="text-center text-sm text-gray-600 mb-4 p-2 bg-white rounded-lg shadow-sm">
               Your User ID: <span className="font-semibold break-all text-blue-700">{userId}</span>
             </div>
@@ -129,6 +157,7 @@ function App() {
             bookings={bookings}
             onSlotClick={handleSlotClick}
             onEditBooking={handleEditBooking}
+            onDeleteBooking={deleteBooking}
           />
         </main>
 
